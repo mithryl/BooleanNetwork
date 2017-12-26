@@ -1,37 +1,48 @@
 package BooleanNetwork;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 
 public class Node {
     int state,buffer;
     Rule rule;
     ArrayList<Node> neighbors = new ArrayList<>();
+
+    public BitSet neighborbit = new BitSet();//TODO: implement proper bitset size
+
     int ID;
 
-        public Node(int ID){
-            this.ID = ID;
-        }
+    public Node(int ID){
+        this.ID = ID;
+    }
 
     public void initRules(){
         rule = new Rule(neighbors.size());
     }
 
-
     public byte nextState(){
-        if(neighbors.size() == 0) return rule.getRule(0); //TODO: important, change this
+        if(neighbors.size() == 0) return rule.getRule(0);
 
-        String s = "";
-        for(Node n : neighbors){
-            s += Integer.toString(n.getState());
+        neighborbit.clear();
+
+        for(int i = 0; i < neighbors.size(); i++){//todo: decide between little/big endian
+            if(neighbors.get(i).getState() > 0) neighborbit.set(neighbors.size() - i - 1);
         }
-        return rule.getRule(Integer.parseInt(s,2));
+
+        return rule.getRule(convertBitset(neighborbit));
+    }
+
+    public int convertBitset(BitSet set){
+        int val = 0;
+        for(int i = 0; i < set.length(); i++){
+            val += set.get(i) ? (1 << i) : 0;
+        }
+        return val;
     }
 
     public void addNeighbor(Node n){
         neighbors.add(n);
     }
-
-
     /* getters and setters */
 
     public void setState(int state){
