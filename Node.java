@@ -25,13 +25,14 @@ public class Node {
 
         neighborbit.clear();
 
-        for(int i = 0; i < neighbors.size(); i++){//todo: decide between little/big endian
+        for(int i = 0; i < neighbors.size(); i++){
             if(neighbors.get(i).getState() > 0) neighborbit.set(neighbors.size() - i - 1);
         }
 
         return rule.getRule(convertBitset(neighborbit));
     }
 
+    //Converts bitset into base 10 int
     public int convertBitset(BitSet set){
         int val = 0;
         for(int i = 0; i < set.length(); i++){
@@ -43,6 +44,7 @@ public class Node {
     public void addNeighbor(Node n){
         neighbors.add(n);
     }
+
     /* getters and setters */
 
     public void setState(int state){
@@ -57,7 +59,7 @@ public class Node {
         this.buffer = buffer;
     }
 
-    public void swap(){
+    public void swapBuffer(){
         state = buffer;
     }
 

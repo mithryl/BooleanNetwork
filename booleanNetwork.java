@@ -3,30 +3,31 @@ package BooleanNetwork;
 import java.util.*;
 
 public class booleanNetwork {
+
     Node[] network;
     int size;
 
-    Random rand = new Random(); // used for generation methods
+    Random rand = new Random(); // use for generation methods
 
-    public booleanNetwork(){//default constructor
-    }
-
+    //iterates network for given synchronous update method
     public void iterate(int iter){
         for(int i = 0; i < iter; i++){
             update();
         }
     }
 
+    //iterates network using any specified updateMethod
     public void iterate(Runnable updateMethod, int iterations){
         for(int i = 0; i < iterations; i++){
             updateMethod.run();
         }
     }
 
-
     /* Update Methods */
-
+    ArrayList<Node>[] outputnodes;
     Set<Node> update = new HashSet<>();
+
+    //Event based updating, only updates nodes with changed neighbors
     public void eventUpdate(){
         Set<Node> buffer = new HashSet<>();
 
@@ -37,19 +38,14 @@ public class booleanNetwork {
         }
 
         for (Node n : update) {
-            n.swap();
+            n.swapBuffer();
         }
 
         update.clear();
         update.addAll(buffer);
     }
 
-    public void setUpdateNodes(Node... n){
-        for(Node l : n){
-            update.add(l);
-        }
-    }
-
+    //Sets buffer of Node n, returns true if value has changed
     public boolean eventNodeUpdate(Node n){
         n.setBuffer();
 
@@ -60,6 +56,80 @@ public class booleanNetwork {
         }
     }
 
+    //must be called before cascade update
+    public void initOutputNodes(){
+        outputnodes = new ArrayList[size];
+        for (int i = 0; i < size; i++) {
+            outputnodes[i] = new ArrayList<>();
+        }
+
+        //Add nodes with inputs N to list (inverse of neighbor list)
+        for (Node n : network) {
+            for (Node k : network) {
+                if (n != k && k.getNeighbors().contains(n)) {
+                    outputnodes[n.getID()].add(k);
+                }
+            }
+        }
+    }
+
+    //Cascade updating, only updates nodes connected to previously updated nodes
+    public void cascadeUpdate(){
+        Set<Node> buffer = new HashSet<>();
+
+        buffer.clear();
+
+        for (Node n : update) {
+            buffer.addAll(outputnodes[n.getID()]);
+            n.setBuffer();
+        }
+
+        for (Node n : update) {
+            n.swapBuffer();
+        }
+
+        update.clear();
+        update.addAll(buffer);
+    }
+
+    //Clears nodes in update set
+    public void resetUpdateNodes(){
+        update.clear();
+    }
+
+    //Adds all nodes to initial update set
+    public void setUpdateNodesAll(){
+        for(Node n : network){
+            setUpdateNodes(n);
+        }
+    }
+
+    //Adds nodes to initial update set
+    public void setUpdateNodes(Node... n){
+        for(Node l : n){
+            update.add(l);
+        }
+    }
+
+    public void setUpdateNodes(int... n){
+        for(int i : n){
+            update.add(get(i));
+        }
+    }
+
+    public Set<Node> getUpdateNodes(){
+        return update;
+    }
+
+    public void printUpdateNodes(){
+        for(Node n : update){
+            System.out.print(n.getID() + "\t");
+        }
+        System.out.println();
+    }
+
+
+    //Updates a randomly selected node with uniform probability
     public void asyncUpdate(){
         int i = rand.nextInt(getSize());
 
@@ -68,21 +138,21 @@ public class booleanNetwork {
         n.setState(n.nextState());
     }
 
+    //Classical updating scheme
     public void update(){
-        int[] buffer = new int[network.length];
-
-        for(int i = 0; i < buffer.length; i++){
-            buffer[i] = network[i].nextState();
+        for(Node n : network){
+            n.setBuffer();
         }
 
-        for(int i = 0; i < buffer.length; i++){
-            network[i].setState(buffer[i]);
+        for(Node n : network){
+            n.swapBuffer();
         }
     }
 
-    /* NETWORK GENERATION METHODS */
+    /* Network Generation Methods*/
 
-    public booleanNetwork setNetwork(ArrayList<SD> connections, int size){
+    //Constructs network topology using list of source/destination nodes
+    public booleanNetwork setNetwork(List<SD> connections, int size){
         network = new Node[size];
         this.size = size;
 
@@ -90,25 +160,25 @@ public class booleanNetwork {
             network[i] = new Node(i);
         }
 
-        ArrayList<Node>[] neighbors = new ArrayList[size]; //store each nodes neighbors in an array
+        ArrayList<Node>[] neighbors = new ArrayList[size]; //Store node neighbors in array
 
-        for(int i = 0; i < neighbors.length; i++){//array init
+        for(int i = 0; i < neighbors.length; i++){
             neighbors[i] = new ArrayList<>();
         }
 
         for(SD sd : connections){
-            neighbors[sd.getSource()].add(network[sd.getDestination()]);//fill arraylists
+            neighbors[sd.getSource()].add(network[sd.getDestination()]);//Fill array with neighbors
         }
 
         for(int i = 0; i < size; i++){
-            network[i].setNeighbors(neighbors[i]);//
+            network[i].setNeighbors(neighbors[i]);//Add neighbor arrays to nodes
         }
-
-        generateRandomRules();//TODO: might be able to get rid of this
 
         return this;
     }
 
+
+    //constructs network using int array in form of [node][neighbors]
     public booleanNetwork setNetwork(int[][] neighbors){//includes placeholder value
         network = new Node[neighbors.length]; //set to n size
         this.size = neighbors.length;
@@ -117,20 +187,13 @@ public class booleanNetwork {
             network[i] = new Node(i);
         }
 
-        Node placehold = new Node(-1);
-        placehold.setState(0);//placeholder state is always zero
-
         for(int i = 0; i < size; i++){
             ArrayList<Node> nb = new ArrayList<>();
 
             for(int j = 0; j < neighbors[i].length; j++){
 
-                if(neighbors[i][j] >= 0){//not special value
+                if(neighbors[i][j] >= 0){   //value is not -1, therefore it is used
                     nb.add(network[neighbors[i][j]]);
-                }else if(neighbors[i][j] == -2){
-                    //do nothing, this is used for fixed length topologies which don't use placeholder nodes
-                }else{
-                    nb.add(placehold);//must be == -1
                 }
 
             }
@@ -138,12 +201,10 @@ public class booleanNetwork {
             network[i].setNeighbors(nb);
         }
 
-        generateRandomRules(); //TODO: remember what to do about this
-
         return this;
     }
 
-
+    //Adds random connections until average K is >= specified k
     public booleanNetwork generateRandomNetwork(int size,double k){
         network = new Node[size];
         this.size = size;
@@ -161,7 +222,8 @@ public class booleanNetwork {
 
     /* MISC NETWORK METHODS*/
 
-    public byte getMajority(){ //returns the majority state of the network
+    //Returns the majority state of the network
+    public byte getMajority(){
         int counter = 0;
 
         for(Node n : network){
@@ -177,7 +239,14 @@ public class booleanNetwork {
         }
     }
 
-    public void seedNetwork(double p){//p is percent of nodes set to 1
+
+    public void seedNetwork(){
+        seedNetwork(rand.nextDouble());
+    }
+
+    //Sets state of network with probability P of a node being set to one. Does not guarantee exact probability
+    public void seedNetwork(double p){
+
         for(Node n : network){
             if(rand.nextDouble() < p){
                 n.setState(1);
@@ -187,6 +256,7 @@ public class booleanNetwork {
         }
     }
 
+    //Sets state of nodes to one until percent p of network is ones
     public void seedNetworkExact(double p){
         resetState(); //for repeated use of seed method
 
@@ -195,13 +265,17 @@ public class booleanNetwork {
         }
     }
 
-    public void resetState(){ //set all nodes to zero
+
+
+    //Set all nodes to zero
+    public void resetState(){
         for(Node n : network){
             n.setState(0);
         }
     }
 
-    public double getComposition(){//returns percent of network in one state
+    //Returns percent of network in state 1
+    public double getComposition(){
         int counter = 0;
 
         for(Node n : network){
@@ -213,6 +287,7 @@ public class booleanNetwork {
         return (double) counter / size;
     }
 
+    //Creates new rule for each node in network
     public void generateRandomRules(){
         for(Node n : network){
             n.initRules();
@@ -223,7 +298,8 @@ public class booleanNetwork {
 
     /* Fitness Methods */
 
-    public double syncFitness(int iterations){//returns # nodes in proper state for sync, for given iter
+    //Returns number of nodes in proper state for sync after set iterations
+    public double syncFitness(int iterations){
         double[] fit = new double[iterations];
         byte majority = getMajority();
         byte alt = majority == 0 ? (byte) 1 : (byte) 0;
@@ -241,6 +317,30 @@ public class booleanNetwork {
 
         return fitnessSum / iterations;
     }
+
+    //Sync fitness for non CRBN update schemes
+    public double syncFitness(int iterations, Runnable update){
+        double[] fit = new double[iterations];
+        byte majority = getMajority();
+        byte alt = majority == 0 ? (byte) 1 : (byte) 0;
+
+        double fitnessSum = 0;
+
+        for(int i = 0; i < iterations; i++){
+            if(i % 2 == 0){
+                fitnessSum += densityFitness(majority);
+            }else{
+                fitnessSum += densityFitness(alt);
+            }
+
+            update.run();
+
+        }
+
+        return fitnessSum / iterations;
+    }
+
+    //Performs density test on network for set iterations
     public double densityFitness(int iterations){
 
         double total = 0;
@@ -255,10 +355,11 @@ public class booleanNetwork {
         return total / iterations;
     }
 
-    public double densityFitness(byte type){
+    //Returns percent of network in state
+    public double densityFitness(byte state){
         int counter = 0;
         for(Node n : network){
-            if(n.getState() == type){
+            if(n.getState() == state){
                 counter++;
             }
         }
@@ -268,38 +369,20 @@ public class booleanNetwork {
 
     /* Static Methods*/
 
-    static Random srand = new Random(); // for use in static methods
+    static Random srand = new Random();
 
-    public static ArrayList<SD> getRandomNetwork(int size, double k){
+    //Returns topology in source,destination format. Size of list may vary
+    public static ArrayList<SD> getRandomNetworkApproxSD(int size, double k){
         ArrayList<SD> topology = new ArrayList<>();
 
         while(averageK(topology,size) < k){
             topology.add(new SD(srand.nextInt(size),srand.nextInt(size)));
         }
-
-        return topology;
-    }
-    public static int[][] getRandomNetworkMax(int size, double k, int maxk){//k for any node will not be > maxk
-        int[][] topology = new int[size][0];
-
-        while(averageK(topology) < k){
-            int n = srand.nextInt(size);
-
-            if(topology[n].length < maxk){
-                topology[n] = new int[topology[n].length + 1];
-            }
-        }
-
-        for(int i = 0; i < size; i++){
-            for(int j = 0; j < topology[i].length; j++){
-                topology[i][j] = srand.nextInt(size);
-            }
-        }
-
         return topology;
     }
 
-    public static int[][] getRandomNetworkMaxPlaceholder(int size, double k, int maxk){//k for any node will not be > maxk,
+    //Returns topology with a set length in array representation, with unused nodes being set to -1 (Useful in GA's)
+    public static int[][] getRandomNetworkApprox(int size, double k, int maxk){
         int[][] topology = new int[size][maxk];
 
         for(int i = 0; i < size; i++){
@@ -313,36 +396,80 @@ public class booleanNetwork {
         return topology;
     }
 
-    public static int[][] getRandomNetworkMaxFixed(int size, double k, int maxk){
+    //Returns a topology with an exact K for each node
+    public static int[][] getRandomNetworkClassic(int size, int k){
+        int[][] topology = new int[size][k];
+
+        for(int i = 0; i < size; i++){
+            for(int j = 0; j < k; j++){
+                topology[i][j] = srand.nextInt(size);
+            }
+        }
+
+        return topology;
+    }
+
+    //Random distribution (not approximate) for integers only
+    //This might affect GA crossover performance since all -1 values are clustered towards end of a single int[]
+    public static int[][] getRandomNetwork(int size, int k, int maxk){
+        int connections = size * k;
         int[][] topology = new int[size][maxk];
 
         for(int i = 0; i < size; i++){
             for(int j = 0; j < maxk; j++){
-                topology[i][j] = -2;
+                topology[i][j] = -1;
             }
         }
-        while(averageK(topology) < k){
-            topology[srand.nextInt(size)][srand.nextInt(maxk)] = srand.nextInt(size);
+
+        ArrayList<Integer> inputs = new ArrayList<>();//used to get rid of redundant rand() calls
+        for(int i = 0; i < size; i++){
+            inputs.add(i);
         }
+
+        int j;
+        for(int i = 0; i < connections; i++){
+            j = srand.nextInt(inputs.size());
+
+            if(!addConnection(topology,inputs.get(j))){
+                inputs.remove(j);//enforce maximum K, remove from list
+                i--;//restart
+            }
+        }
+
         return topology;
     }
 
-    private static double averageK(ArrayList<SD> gene, int size){//for use in above method
-        short[] connections = new short[size];
+    //helper method for the above
+    private static boolean addConnection(int[][] topology, int j){
+        for (int i = 0; i < topology[j].length; i++){
+            if(topology[j][i] < 0){
+                topology[j][i] = srand.nextInt(topology.length);
+                return true;
+            }
+        }
+
+        return false;   //node has reached maximum allowed K, return false
+    }
+
+
+    //Average connectivity for source, destination representation
+    private static double averageK(ArrayList<SD> gene, int size){
+        int[] connections = new int[size];
 
         for(SD sd : gene){
             connections[sd.getSource()]++;
         }
 
         double avg = 0;
-        for(short i : connections){
+        for(int i : connections){
             avg += i;
         }
 
         return avg/size;
     }
 
-    private static double averageK(int[][] net){//for use in above method
+    //Average connectivity for int array format
+    public static double averageK(int[][] net){
         int counter = 0;
         for(int i = 0; i < net.length; i++){
             for(int j = 0; j < net[i].length; j++){
@@ -352,6 +479,7 @@ public class booleanNetwork {
         return (double) counter / net.length;
     }
 
+    //Random ruleset as array of rule objects
     public static Rule[] getRandomRuleset(int size,int maxK){
         Rule[] randomRules = new Rule[size];
         for(int i = 0; i < randomRules.length; i++){
@@ -359,6 +487,8 @@ public class booleanNetwork {
         }
         return randomRules;
     }
+
+    //Returns ruleset as byte array (Useful in GA's)
     public static byte[][] getRandomRulesetByte(int size, int maxK){
         byte[][] rules = new byte[size][];
 
@@ -369,6 +499,7 @@ public class booleanNetwork {
         return rules;
     }
 
+    //Returns random state as byte array
     public static int[] getRandomState(int size, double p){
         int[] state = new int[size];
         for(int i = 0; i < state.length; i++){
@@ -475,15 +606,18 @@ public class booleanNetwork {
     }
 
     /* print methods */
+    public void printStates(){
+         for(Node n : network)
+            System.out.printf("%d:\t%d\n",n.getID(),n.getState());  //print ID and State
+
+        System.out.println();
+    }
 
     public void printNetwork(){
         for(Node n : network){
-            System.out.print(n.getID() + ":" + "\t" + n.getState());
-            System.out.println();
-            System.out.print("\t");
-            n.getRule().printRules();
+            System.out.printf("%d:\t%d\n\t",n.getID(),n.getState());  //print ID and State
+            n.getRule().printRules();//print rules
             System.out.print("\t[");
-
             ArrayList<Node> k = n.getNeighbors();
             for(int i = 0; i < k.size(); i++){
                 System.out.print(k.get(i).getID());
@@ -493,5 +627,6 @@ public class booleanNetwork {
             }
             System.out.println("]");
         }
+        System.out.println();
     }
 }

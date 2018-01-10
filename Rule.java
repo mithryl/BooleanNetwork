@@ -14,8 +14,8 @@ public class Rule {
         ruleTable = new byte[(int) Math.pow(2, connections)];
         genRules();
     }
-    public Rule(){}//default constructor
 
+    public Rule(){}
 
     public byte getRule(int i){
         return ruleTable[i];
