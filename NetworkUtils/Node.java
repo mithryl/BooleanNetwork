@@ -1,4 +1,4 @@
-package BooleanNetwork;
+package NetworkUtils;
 
 import java.util.ArrayList;
 import java.util.BitSet;

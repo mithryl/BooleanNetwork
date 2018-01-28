@@ -1,4 +1,4 @@
-package BooleanNetwork;
+package NetworkUtils;
 
 import java.util.Random;
 
@@ -12,7 +12,7 @@ public class Rule {
     public Rule(int connections){
         this.connections = connections;
         ruleTable = new byte[(int) Math.pow(2, connections)];
-        genRules();
+        generateRules();
     }
 
     public Rule(){}
@@ -30,7 +30,7 @@ public class Rule {
         return ruleTable.clone();
     }
 
-    public void genRules(){
+    public void generateRules(){
         for(int i = 0; i < ruleTable.length; i++){
             ruleTable[i] = (byte) rand.nextInt(2);
         }

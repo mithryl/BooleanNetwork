@@ -1,7 +1,6 @@
-package BooleanNetwork;
+package NetworkUtils;
 
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.DoubleFunction;
 import java.util.function.IntSupplier;
@@ -13,7 +12,6 @@ import static java.lang.Math.pow;
  */
 
 public class NetworkDistribution {
-    static Random rand = new Random();
 
     public static ArrayList<SD> getNetwork(double s, int n, int maxk){
         return getNetwork(getDistributionSupplier(s,maxk),n,maxk);

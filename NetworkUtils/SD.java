@@ -1,4 +1,4 @@
-package BooleanNetwork;
+package NetworkUtils;
 
 public class SD {
     int source;

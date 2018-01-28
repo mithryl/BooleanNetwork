@@ -1,4 +1,4 @@
-# BooleanNetwork
+# NetworkUtils
 
 Includes methods for generating network topologies/rules and iterating them with a given updating scheme.
 

@@ -1,8 +1,8 @@
-package BooleanNetwork;
+package NetworkUtils;
 
 import java.util.*;
 
-public class booleanNetwork {
+public class BooleanNetwork {
 
     //Array of Nodes in network. Node ID should correspond to array index
     Node[] network;
@@ -163,7 +163,7 @@ public class booleanNetwork {
     /* Network Generation Methods*/
 
     //Constructs network topology using list of source/destination nodes
-    public booleanNetwork setNetwork(List<SD> connections, int size){
+    public BooleanNetwork setNetwork(List<SD> connections, int size){
         network = new Node[size];
         this.size = size;
 
@@ -190,7 +190,7 @@ public class booleanNetwork {
 
 
     //constructs network using int array in form of [node][neighbors]
-    public booleanNetwork setNetwork(int[][] neighbors){//includes placeholder value
+    public BooleanNetwork setNetwork(int[][] neighbors){//includes placeholder value
         network = new Node[neighbors.length]; //set to n size
         this.size = neighbors.length;
 
@@ -216,7 +216,7 @@ public class booleanNetwork {
     }
 
     //Adds random connections until average K is >= specified k
-    public booleanNetwork generateRandomNetwork(int size, double k){
+    public BooleanNetwork generateRandomNetwork(int size, double k){
         network = new Node[size];
         this.size = size;
 
@@ -525,14 +525,14 @@ public class booleanNetwork {
 
    /* Setter Methods */
 
-    public booleanNetwork setRules(Rule[] rules){
+    public BooleanNetwork setRules(Rule[] rules){
         for(int i = 0; i < network.length; i++){
             network[i].setRule(rules[i]);
         }
 
         return this;
     }
-    public booleanNetwork setRules(byte[][] rules){
+    public BooleanNetwork setRules(byte[][] rules){
         for(int i = 0; i < rules.length; i++){
             Rule rule = new Rule();
             rule.setRuleTable(rules[i]);
@@ -542,13 +542,21 @@ public class booleanNetwork {
         return this;
     }
 
-    public booleanNetwork setNetwork(Node[] network){
+    public BooleanNetwork setNetwork(Node[] network){
         this.network = network;
 
         return this;
     }
 
-    public booleanNetwork setState(int[] state){
+    public BooleanNetwork setState(int[] state){
+        for(int i = 0; i < network.length; i++){
+            network[i].setState(state[i]);
+        }
+
+        return this;
+    }
+
+    public BooleanNetwork setState(byte[] state){
         for(int i = 0; i < network.length; i++){
             network[i].setState(state[i]);
         }
@@ -639,6 +647,19 @@ public class booleanNetwork {
         System.out.println("Update Nodes:");
         for(Node n : update){
             System.out.print(n.getID() + "\t");
+        }
+        System.out.println();
+    }
+
+    public void printUpdateMatrix(){
+        int[] updates = new int[size];
+
+        for(Node n : update) {
+            updates[n.getID()] = 1;
+        }
+
+        for(int i = 0; i < size; i++){
+            System.out.print(updates[i] + "\t");
         }
         System.out.println();
     }
