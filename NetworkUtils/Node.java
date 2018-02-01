@@ -21,7 +21,7 @@ public class Node {
     }
 
     public byte nextState(){
-        if(neighbors.size() == 0) return rule.getRule(0);
+        if(neighbors.size() == 0) return (byte) state; //if no neighbors, state is same as initial state
 
         neighborbit.clear();
 

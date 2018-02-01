@@ -14,41 +14,75 @@ import static java.lang.Math.pow;
 public class NetworkDistribution {
 
     public static ArrayList<SD> getNetwork(double s, int n, int maxk){
-        return getNetwork(getDistributionSupplier(s,maxk),n,maxk);
+        return getNetwork(getDistributionSupplier(s,n * maxk),n,maxk);
     }
 
     public static ArrayList<SD> getNetwork(IntSupplier distribution, int n, int maxk){
-        int[] degrees = new int[maxk];
 
-        //Fill array of degrees with proper values TODO: implement both methods for generating these networks
-        for(int i = 0;i < n; i++){
-            degrees[distribution.getAsInt()-1]++;
-        }
+        //Generate a degree sequence with a total sum less than n * maxk (for proper input distribution)
+        int[] degrees = createDegreeSequence(distribution,n,n * maxk);
 
         ArrayList<SD> list = new ArrayList<>();
 
         int node = 0;
 
         //Create list of degree stubs with the source node only set
-        for(int i = 0; i < degrees.length; i++){
-            for(int j = 0; j < degrees[i]; j++){
-                for(int k = 0; k < (i+1); k++){
-
+        for (int i = 0; i < degrees.length; i++) {
+            for (int j = 0; j < degrees[i]; j++) {
+                for (int k = 0; k < (i+1); k++) {
                     SD stub = new SD();
                     stub.setSource(node);
                     list.add(stub);
-
                 }
                 node++;
             }
         }
 
+        //List of nodes whose input degree is less than maxk
+        ArrayList<Integer> set = new ArrayList<>();
+
+        for (int i = 0; i < n; i++) {
+            set.add(i);
+        }
+
+        //This should be faster than iterating over the list each time...
+        int[] inputs = new int[n];
+
         //Create poissionian input distribution
-        for(SD sd : list){
-            sd.setDestination(ThreadLocalRandom.current().nextInt(n));
+        for(int i = 0; i < list.size(); i++){
+
+            int index = ThreadLocalRandom.current().nextInt(set.size());
+            node = set.get(index);
+
+            if (inputs[node] >= maxk) {
+                set.remove(index);
+                i--;
+            } else {
+                inputs[node]++;
+                list.get(i).setDestination(node);
+            }
         }
 
         return list;
+    }
+
+    public static int[] createDegreeSequence(IntSupplier distribution,int n, int cap){
+
+        int[] degrees;
+
+        do  {
+            degrees = new int[cap]; //setting cutoff to n * maxk
+
+            //Fill array of degrees with proper values
+            for (int i = 0; i < n; i++) {
+                degrees[distribution.getAsInt() - 1]++;
+            }
+
+        } while (degreeTotal(degrees) > cap);
+
+        System.out.println(degreeTotal(degrees));
+
+        return degrees;
     }
 
     public static int degreeTotal(int[] degrees){
@@ -61,22 +95,8 @@ public class NetworkDistribution {
         return total;
     }
 
-
-    public static double[] distribution(DoubleFunction<Double> dist, int maxk){
-        double[] degrees = new double[maxk];
-
-        double total = 0;
-
-        for(int i = 1; i <= maxk; i++){
-            total += dist.apply(i);
-            degrees[i-1] = total;
-        }
-
-        return degrees;
-    }
-
-    public static IntSupplier getDistributionSupplier(double lambda,int maxk){
-        return getDistributionSupplier(distribution(getPowerLaw(lambda),maxk));
+    public static IntSupplier getDistributionSupplier(double lambda,int cap){
+        return getDistributionSupplier(distribution(getPowerLaw(lambda),cap));
     }
 
     public static IntSupplier getDistributionSupplier(double[] dist){
@@ -86,13 +106,26 @@ public class NetworkDistribution {
             double r = ThreadLocalRandom.current().nextDouble(max);
 
             for(int i = 0; i < dist.length; i++){
-                if(r <= dist[i]) return i+1;
+                if(r < dist[i]) return i+1;
             }
 
             System.out.println("Number outside distribution range");
 
             return -1;
         };
+    }
+
+    public static double[] distribution(DoubleFunction<Double> dist, int cap){
+        double[] degrees = new double[cap];
+
+        double total = 0;
+
+        for (int i = 1; i <= cap; i++) {
+            total += dist.apply(i);
+            degrees[i-1] = total;
+        }
+
+        return degrees;
     }
 
     public static DoubleFunction<Double> getPowerLaw(double s) {
