@@ -2,30 +2,34 @@
 
 Includes methods for generating network topologies/rules and iterating them with a given updating scheme.
 
-## Example
+## Basic Usage:
 ```Java
-    //Initialize empty network
-    booleanNetwork network = new booleanNetwork();
+    //Create an empty BooleanNetwork
+    BooleanNetwork network = new BooleanNetwork();
 
-    //Manually specify a topology
+    //Generate a network topology with N 30, K 2, with a maximum K of 10 (Poissionian input/output distribution)
+    //Topologies are in the form [node][inputs]
+    int[][] topology = Networks.randomTopology(30,2,10);
+
+    //Manually specify a topology.
+    //The list below creates a 3 node loop (Node 0 has Node 1 as input, Node 1 has Node 2, etc)
     network.setNetwork(new int[][]{
-        {0,1},
-        {1,0}};
+        {1},
+        {2},
+        {0}});
 
-    //Or generate a network topology with N 30, K 2, with a maximum K of 10. Each int[] is an array of input connections for a given  node
-    int[][] topology = booleanNetwork.getRandomNetwork(30,2,10);
-
-    //Set the topology
+    //Set network topology
     network.setNetwork(topology);
 
-    //Generate rules for the given topology
-    network.generateRandomRules();
-
-    //Or generate rules for a network N 30 with a maximum K of 10;
-    byte[][] rule = booleanNetwork.getRandomRulesetByte(30,10);
+    //Generate rules for a network N 30 with a maximum K of 10;
+    //Each byte[] is a lookup table consisting of (2 ^ maxK) inputs
+    byte[][] rule = Networks.randomRulesetByte(30,10);
 
     //Set the rules
     network.setRules(rule);
+
+    //Generate and set random rules for a given topology (faster than the above method, no need to specify max K);
+    network.generateRandomRules();
 
     //Update the network 100 times using a synchronous update
     network.iterate(100);
@@ -36,11 +40,59 @@ Includes methods for generating network topologies/rules and iterating them with
     //Certain schemes require adding nodes to an initial update set, or initializing an list of nodes to aid with cascade updates
     network.setUpdateNodes(0,1,2);
 
-    network.initOutputNodes(); //for cascade updates
+    //Necessary for cascade Update
+    network.initOutputNodes();
 
-    network.iterate(network::cascadeUpdate,100);
+    //Some methods can be chained
+    BooleanNetwork net = new BooleanNetwork()
+        .setNetwork(Networks.randomTopology(100,3,10))
+        .setRules(Networks.randomRuleset(100,10));
 
-    //Values can be retrieved by calling getNetwork() to return the array of Nodes making up the network, with state and rules included
-    //Node has getters for retrieving specific state values / rules
-    Node[] network = network.getNetwork();
+    int[] state = net.iterate(net::asyncUpdate,100)
+            .getState();
+```
+
+## Example Program
+```Java
+public static double averageHammingDistance(int networks, int states, int N, double K) {
+//Create empty boolean network
+    BooleanNetwork network = new BooleanNetwork();
+    ThreadLocalRandom rand = ThreadLocalRandom.current();
+
+    int totaldamage = 0;
+
+    for (int i = 0; i < networks; i++) {
+        //Generate random topology and rule tables
+        network.setNetwork(Networks.randomTopology(N,K,10))
+                .generateRandomRules();
+
+        for (int j = 0; j < states; j++) {
+            //Generate random state and save it
+            int[] state = Networks.randomState(N);
+
+            //Set state of network to saved state, iterate for 200 steps
+            int[] state1 = network.setState(state)
+                    .iterate(200)
+                    .getState();
+
+            //Revert back to initial state, but change perturb value of a single node
+            network.setState(state);
+            Node n = network.getNode(rand.nextInt(N));
+            n.setState(n.getState() == 0 ? 1 : 0);
+
+            //Iterate for 200 steps with perturbed state
+            int[] state2 = network.iterate(200)
+                    .getState();
+
+            //Compare iterated states, add any damage to total damage count
+            for (int k = 0; k < N; k++) {
+                if (state1[k] != state2[k]) {
+                    totaldamage++;
+                }
+            }
+        }
+    }
+    //Return averaged damage
+    return (double) totaldamage / (double) (states * networks);
+    }
 ```
