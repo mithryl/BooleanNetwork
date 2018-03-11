@@ -80,8 +80,6 @@ public class NetworkDistribution {
 
         } while (degreeTotal(degrees) > cap);
 
-        System.out.println(degreeTotal(degrees));
-
         return degrees;
     }
 

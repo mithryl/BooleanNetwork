@@ -36,15 +36,7 @@ public class Rule {
         }
     }
 
-    public static byte[] getRandomRule(int connections){
-        byte[] ruletable = new byte[(int) Math.pow(2, connections)];
 
-        for(int i = 0; i < ruletable.length; i++){
-            ruletable[i] = (byte) srand.nextInt(2);
-        }
-
-        return ruletable;
-    }
 
     public void printRules(){
         System.out.print("{");

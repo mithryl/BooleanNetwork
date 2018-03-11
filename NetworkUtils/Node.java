@@ -12,20 +12,20 @@ public class Node {
 
     int ID;
 
-    public Node(int ID){
+    public Node(int ID) {
         this.ID = ID;
     }
 
-    public void initRules(){
+    public void initRules() {
         rule = new Rule(neighbors.size());
     }
 
-    public byte nextState(){
-        if(neighbors.size() == 0) return (byte) state; //if no neighbors, state is same as initial state
+    public byte nextState() {
+        if (neighbors.size() == 0) return 0;
 
         neighborbit.clear();
 
-        for(int i = 0; i < neighbors.size(); i++){
+        for (int i = 0; i < neighbors.size(); i++) {
             if(neighbors.get(i).getState() > 0) neighborbit.set(neighbors.size() - i - 1);
         }
 
@@ -33,7 +33,7 @@ public class Node {
     }
 
     //Converts bitset into base 10 int
-    public int convertBitset(BitSet set){
+    public static int convertBitset(BitSet set) {
         int val = 0;
         for(int i = 0; i < set.length(); i++){
             val += set.get(i) ? (1 << i) : 0;
@@ -69,26 +69,28 @@ public class Node {
         }
     }
 
-    public void setNeighbors(ArrayList<Node> neighbors){
+    public void setNeighbors(ArrayList<Node> neighbors) {
         this.neighbors = neighbors;
     }
 
     public void setRule(Rule rule){
         this.rule = rule;
     }
-    public int getBuffer(){
-        return buffer;
-    }
+
     public int getState(){
         return state;
     }
+
     public int getID() {
         return ID;
     }
+
     public Rule getRule() {
         return rule;
     }
+
     public ArrayList<Node> getNeighbors() {
         return neighbors;
     }
+
 }

@@ -17,8 +17,7 @@ import java.util.List;
 public class NetworkIO {
 
     //Reads in a network topology in the agreed upon format
-    public static int[][] readTopology(String path){
-        Path network = Paths.get(path);
+    public static int[][] readTopology(Path network){
 
         if (Files.notExists(network)) {
             System.out.println("File does not exist");
@@ -26,7 +25,6 @@ public class NetworkIO {
         }
 
         try {
-
             //Read lines from network file and create topology
             List<String> lines = Files.readAllLines(network);
             int[][] topology = new int[lines.size()][];
@@ -54,8 +52,7 @@ public class NetworkIO {
     }
 
 
-    public static byte[][] readRules(String path) {
-        Path ruletable = Paths.get(path);
+    public static byte[][] readRules(Path ruletable) {
 
         if (Files.notExists(ruletable)) {
             System.out.println("File does not exist");
