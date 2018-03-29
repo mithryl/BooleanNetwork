@@ -57,7 +57,7 @@ public class BooleanNetwork {
     }
 
     //Cascade updating, only updates nodes connected to previously updated nodes
-    public void cascadeUpdate(){
+    public void cascadeUpdate() {
         buffer.clear();
 
         for (Node n : update) {
@@ -71,6 +71,19 @@ public class BooleanNetwork {
 
         update.clear();
         update.addAll(buffer);
+    }
+
+    public BooleanNetwork cascadeUpdateNoNodes() {
+        buffer.clear();
+
+        for (Node n : update) {
+            buffer.addAll(outputnodes[n.getID()]);
+        }
+
+        update.clear();
+        update.addAll(buffer);
+
+        return this;
     }
 
     //Clears nodes in update set
@@ -89,6 +102,21 @@ public class BooleanNetwork {
         }
         return this;
     }
+
+    public BooleanNetwork addUpdateNode(Node... n) {
+        for (Node l : n) {
+            update.add(l);
+        }
+        return this;
+    }
+
+    public BooleanNetwork addUpdateNode(int... n) {
+        for (int i : n) {
+            update.add(getNode(i));
+        }
+        return this;
+    }
+
 
     public BooleanNetwork setUpdateNodes(int... n){
         update.clear();
@@ -162,13 +190,11 @@ public class BooleanNetwork {
             ArrayList<Node> nb = new ArrayList<>();
 
             for (int j = 0; j < neighbors[i].length; j++) {
-
                 if (neighbors[i][j] >= 0) {   //value is not -1, therefore it is used
                     nb.add(network[neighbors[i][j]]);
+                    network[i].addNeighbor(network[neighbors[i][j]]);
                 }
-
             }
-
             network[i].setNeighbors(nb);
         }
 
@@ -295,10 +321,9 @@ public class BooleanNetwork {
     /* print methods */
     public BooleanNetwork printStates(){
          for(Node n : network)
-            System.out.printf("%d:\t%d\n",n.getID(),n.getState());  //print ID and State
+            System.out.printf("%d\t",n.getState());  //print ID and State
 
         System.out.println();
-
         return this;
     }
 

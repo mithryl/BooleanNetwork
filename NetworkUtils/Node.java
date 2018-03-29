@@ -12,6 +12,8 @@ public class Node {
 
     int ID;
 
+    public boolean update = false, updatebuffer = false;
+
     public Node(int ID) {
         this.ID = ID;
     }
@@ -61,6 +63,13 @@ public class Node {
 
     public void swapBuffer(){
         state = buffer;
+    }
+
+    public void setUpdateBuffer() {
+        updatebuffer = true;
+    }
+    public void swapUpdateBuffer() {
+        update = updatebuffer;
     }
 
     public void setNeighbors(Node[] neighbors){

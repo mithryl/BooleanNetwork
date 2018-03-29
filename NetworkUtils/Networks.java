@@ -10,10 +10,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Networks {
     static ThreadLocalRandom rand = ThreadLocalRandom.current();
 
-    public static void main(String args[]) {
-
-    }
-
     public static void setRandomNetwork(BooleanNetwork net, int n, double k, int maxk) {
         net.setNetwork(randomTopology(n,k,maxk))
                 .generateRandomRules();
@@ -26,6 +22,7 @@ public class Networks {
     }
 
     //Returns topology with a set length in array representation, with unused nodes being set to -1 (Useful in GA's)
+    //Follows poission distribution (Passed check!)
     public static int[][] randomTopology(int size, double k, int maxk) {
         int[][] topology = new int[size][maxk];
         List<Integer> open = new ArrayList<>();
@@ -97,7 +94,7 @@ public class Networks {
     }
 
     //Random ruleset as array of rule objects
-    public static Rule[] RandomRuleset(int size, int maxK) {
+    public static Rule[] randomRuleset(int size, int maxK) {
         Rule[] randomRules = new Rule[size];
 
         for (int i = 0; i < randomRules.length; i++) {
@@ -108,7 +105,7 @@ public class Networks {
     }
 
     //Returns ruleset as byte array (Useful in GA's)
-    public static byte[][] RandomRulesetByte(int size, int maxK) {
+    public static byte[][] randomRulesetByte(int size, int maxK) {
         byte[][] rules = new byte[size][];
 
         for (int i = 0; i < size; i++) {
