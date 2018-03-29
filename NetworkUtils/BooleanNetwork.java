@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 //TODO: start splitting methods into separate classes
+//test comment
 
 public class BooleanNetwork {
 
